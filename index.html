@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Pemeriksaan Rumah Sakit</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI', sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#1d976c,#93f9b9);
+    min-height:100vh;
+    padding:20px;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    color:white;
+    margin-bottom:25px;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    margin-bottom:20px;
+}
+
+h2{
+    margin-bottom:15px;
+    border-bottom:2px solid #1d976c;
+    padding-bottom:8px;
+}
+
+.form-group{
+    margin-bottom:12px;
+}
+
+label{
+    font-weight:bold;
+    display:block;
+    margin-bottom:4px;
+}
+
+input, select{
+    width:100%;
+    padding:8px;
+    border-radius:6px;
+    border:2px solid #ddd;
+}
+
+input:focus, select:focus{
+    border-color:#1d976c;
+    outline:none;
+}
+
+button{
+    background:#1d976c;
+    color:white;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    width:100%;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#159957;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:15px;
+    font-size:14px;
+}
+
+th,td{
+    padding:8px;
+    border-bottom:1px solid #ddd;
+    text-align:center;
+}
+
+th{
+    background:#1d976c;
+    color:white;
+}
+
+.status-darurat{
+    color:red;
+    font-weight:bold;
+}
+
+.status-normal{
+    color:green;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>🏥 Sistem Pemeriksaan Rumah Sakit</h1>
+
+<div class="card">
+<h2>Input Data Pasien</h2>
+
+<form id="formRS">
+
+<div class="form-group">
+<label>No Rekam Medis</label>
+<input type="text" id="norm" required>
+</div>
+
+<div class="form-group">
+<label>Nama Pasien</label>
+<input type="text" id="nama" required>
+</div>
+
+<div class="form-group">
+<label>Poli</label>
+<select id="poli">
+<option>Poli Umum</option>
+<option>Poli Jantung</option>
+<option>Poli Anak</option>
+<option>Poli Saraf</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Dokter</label>
+<input type="text" id="dokter" required>
+</div>
+
+<div class="form-group">
+<label>Suhu (°C)</label>
+<input type="number" step="0.1" id="suhu" required>
+</div>
+
+<div class="form-group">
+<label>Tekanan Darah (mmHg)</label>
+<input type="number" id="td" required>
+</div>
+
+<div class="form-group">
+<label>Status Perawatan</label>
+<select id="statusRawat">
+<option>Rawat Jalan</option>
+<option>Rawat Inap</option>
+<option>IGD</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Biaya (Rp)</label>
+<input type="number" id="biaya" required>
+</div>
+
+<button type="submit">Simpan Data Pasien</button>
+
+</form>
+</div>
+
+<div class="card">
+<h2>Data Pemeriksaan RS</h2>
+
+<!-- TAMBAHAN SEARCH -->
+<div class="form-group">
+<label>Cari Pasien (NoRM / Nama)</label>
+<input type="text" id="searchInput" placeholder="Ketik NoRM atau Nama...">
+</div>
+
+<table>
+<thead>
+<tr>
+<th>NoRM</th>
+<th>Nama</th>
+<th>Poli</th>
+<th>Dokter</th>
+<th>Suhu</th>
+<th>TD</th>
+<th>Status</th>
+<th>Kondisi</th>
+<th>Biaya</th>
+</tr>
+</thead>
+<tbody id="tabelRS"></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+
+/* ================================
+   STRUCT / ADT
+================================ */
+
+class PasienRS{
+    constructor(norm,nama,poli,dokter,suhu,td,statusRawat,biaya){
+        this.norm=norm;
+        this.nama=nama;
+        this.poli=poli;
+        this.dokter=dokter;
+        this.suhu=suhu;
+        this.td=td;
+        this.statusRawat=statusRawat;
+        this.biaya=biaya;
+        this.kondisi=this.analisisKondisi();
+    }
+
+    analisisKondisi(){
+        if(this.suhu>38 || this.td>140){
+            return "DARURAT";
+        }
+        return "Normal";
+    }
+}
+
+/* ================================
+   ARRAY OF STRUCT
+================================ */
+
+let databaseRS=[];
+
+/* ================================
+   POINTER SIMULATION
+================================ */
+
+let i=0;
+let ptrPasien=null;
+
+function simpanData(ptrObj){
+    ptrPasien=ptrObj;
+    databaseRS[i]=ptrPasien;
+    i++;
+}
+
+/* ================================
+   TAMPILKAN DATA
+================================ */
+
+function tampilkanData(){
+    const tbody=document.getElementById("tabelRS");
+    tbody.innerHTML="";
+
+    for(let p=0;p<i;p++){
+        let ptr=databaseRS[p];
+
+        tbody.innerHTML+=`
+        <tr>
+        <td>${ptr.norm}</td>
+        <td>${ptr.nama}</td>
+        <td>${ptr.poli}</td>
+        <td>${ptr.dokter}</td>
+        <td>${ptr.suhu}°C</td>
+        <td>${ptr.td}</td>
+        <td>${ptr.statusRawat}</td>
+        <td class="${ptr.kondisi==='DARURAT'?'status-darurat':'status-normal'}">
+            ${ptr.kondisi}
+        </td>
+        <td>Rp ${ptr.biaya.toLocaleString("id-ID")}</td>
+        </tr>
+        `;
+    }
+}
+
+/* ================================
+   EVENT SIMPAN
+================================ */
+
+document.getElementById("formRS")
+.addEventListener("submit",function(e){
+
+    e.preventDefault();
+
+    let pasienBaru=new PasienRS(
+        norm.value,
+        nama.value,
+        poli.value,
+        dokter.value,
+        parseFloat(suhu.value),
+        parseInt(td.value),
+        statusRawat.value,
+        parseFloat(biaya.value)
+    );
+
+    simpanData(pasienBaru);
+    tampilkanData();
+    this.reset();
+});
+
+/* ================================
+   SEARCH FEATURE (POINTER FILTER)
+================================ */
+
+document.getElementById("searchInput")
+.addEventListener("keyup",function(){
+
+    let keyword=this.value.toLowerCase();
+    const tbody=document.getElementById("tabelRS");
+    tbody.innerHTML="";
+
+    for(let p=0;p<i;p++){
+
+        let ptr=databaseRS[p];
+
+        if(
+            ptr.norm.toLowerCase().includes(keyword) ||
+            ptr.nama.toLowerCase().includes(keyword)
+        ){
+            tbody.innerHTML+=`
+            <tr>
+            <td>${ptr.norm}</td>
+            <td>${ptr.nama}</td>
+            <td>${ptr.poli}</td>
+            <td>${ptr.dokter}</td>
+            <td>${ptr.suhu}°C</td>
+            <td>${ptr.td}</td>
+            <td>${ptr.statusRawat}</td>
+            <td class="${ptr.kondisi==='DARURAT'?'status-darurat':'status-normal'}">
+                ${ptr.kondisi}
+            </td>
+            <td>Rp ${ptr.biaya.toLocaleString("id-ID")}</td>
+            </tr>
+            `;
+        }
+    }
+});
+
+</script>
+
+</body>
+</html>
